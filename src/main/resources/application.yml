@@ -13,3 +13,13 @@ spring:
 
 jwt:
   secret: secretkey123
+#jks should be genrated properly  
+user:
+ jkspath: classpath:microservices.jks
+ jkspwd: changeit
+ jksalias: microservice
+  
+token:
+  createexpiryTime: 10
+  refreshexpiryTime: 10  
+  

@@ -1,36 +1,36 @@
 package com.uob.auth.ocoeadmin.jwt.model;
 
+import java.time.LocalDateTime;
+
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize.Inclusion;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+@JsonSerialize(include=Inclusion.NON_NULL)
 public class JwtResponse {
 
-   
-    
-    
+	private String jwtToken;
+	private String expiresDuration;
+	private LocalDateTime expiryTime;
 
-	public JwtResponse(String jwtToken) {
+	private String errorMsg;
+
+	public JwtResponse(String jwtToken, String expiresDuration, LocalDateTime expiryTime) {
 		super();
 		this.jwtToken = jwtToken;
+		this.expiresDuration = expiresDuration;
+		this.expiryTime = expiryTime;
 	}
 
-
-
-	private String jwtToken;
-
-
-
-	public String getJwtToken() {
-		return jwtToken;
+	public JwtResponse(String errorMsg) {
+		super();
+		this.errorMsg = errorMsg;
 	}
 
-
-
-	public void setJwtToken(String jwtToken) {
-		this.jwtToken = jwtToken;
-	}
-	
-	
 }

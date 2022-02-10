@@ -6,16 +6,21 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
+import com.nimbusds.jose.jwk.RSAKey;
+import com.uob.auth.ocoeadmin.jwt.model.JwtRequest;
+import com.uob.auth.ocoeadmin.jwt.model.JwtResponse;
+import com.uob.auth.ocoeadmin.jwt.model.RSAKeyDTO;
+
+import java.io.IOException;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 
-@Service
-public class UserService implements UserDetailsService {
 
-    @Override
-    public UserDetails loadUserByUsername(String userName) throws UsernameNotFoundException {
+public interface UserService  {
 
-        //Logic to get the user form the Database
-
-        return new User("admin","password",new ArrayList<>());
-    }
+	
+	public RSAKeyDTO getRSAKey(String jksPath,String password,String alias) throws NoSuchAlgorithmException, IOException;
+	
+	
+	public JwtResponse createTokenjwt(JwtRequest jwtRequest,RSAKeyDTO rsaJWK);
 }
