@@ -31,6 +31,9 @@ import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 
 import java.security.spec.RSAPublicKeySpec;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
@@ -103,33 +106,24 @@ public class JwtCreation {
 
               public static void main(String[] args)
 
-                                           throws NoSuchAlgorithmException, JOSEException, URISyntaxException, IOException {
+                                           {
 
                              // TODO Auto-generated method stub
             	  
             	  System.out.println("coming");
             	  
-            	 // String exp= "1644498619";
-            	  long currentDateTime = 1644498619;
-            	     
-                  //creating Date from millisecond
-                  Date currentDate = new Date(currentDateTime);
-                
-                  //printing value of Date
-                  System.out.println("current Date: " + currentDate);
-                
-                  DateFormat df = new SimpleDateFormat("dd:MM:yy:HH:mm:ss");
-                
-                  //formatted value of current Date
-                  System.out.println("Milliseconds to Date: " + df.format(currentDate));
-                
-                  //Converting milliseconds to Date using Calendar
-                  
-                
-                  //copying one Date's value into another Date in Java
+            	  try {
+					Connection conn = DriverManager.getConnection( 
+					            "jdbc:mysql://localhost:1521/XEPDB1?user=OCOE_DB&password=ocoe");
+					System.out.println(conn.getSchema());
+				} catch (SQLException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+            	        // Statement st = conn.createStatement();
+            	        // ResultSet rs = st.executeQuery( "select * from table" );
 
-                 
-
+            	        System.out.println("Connected?");
 
  
 

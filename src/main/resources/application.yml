@@ -1,15 +1,38 @@
-server:
-  port: 8084
+spring:
+  profiles:
+    active: local
+    
+  
 
 
+---
 
 spring:
+  profiles: local  
+  datasource:
+    url: jdbc:oracle:thin:@localhost:1521/XEPDB1
+    username: OCOE_DB
+    password: ocoe
+    driverClassName: oracle.jdbc.driver.OracleDriver
+  jpa:
+    database-platform: org.hibernate.dialect.Oracle10gDialect
+    show-sql: true
+  main:
+    allow-bean-definition-overriding: true
   ldap:
     embedded:
       ldif: classpath:test-server.ldif
       base-dn:
       - dc=springframework,dc=org
       port: 8389
+
+server:
+  port: 8084
+
+
+
+
+  
 
 jwt:
   secret: secretkey123
@@ -20,6 +43,6 @@ user:
  jksalias: microservice
   
 token:
-  createexpiryTime: 10
-  refreshexpiryTime: 10  
+  createexpiryTime: 5
+  refreshexpiryTime: 5  
   

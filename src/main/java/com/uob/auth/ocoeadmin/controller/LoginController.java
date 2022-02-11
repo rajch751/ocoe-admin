@@ -1,21 +1,17 @@
 package com.uob.auth.ocoeadmin.controller;
 
-import java.util.ArrayList;
 import java.util.Base64;
-import java.util.Date;
-import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 
-import org.junit.platform.commons.util.StringUtils;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -23,7 +19,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.nimbusds.jose.jwk.RSAKey;
 import com.uob.auth.ocoeadmin.jwt.model.JwtRequest;
 import com.uob.auth.ocoeadmin.jwt.model.JwtResponse;
 import com.uob.auth.ocoeadmin.jwt.model.RSAKeyDTO;
@@ -102,7 +97,7 @@ public class LoginController {
 
 		try {
 
-			if (StringUtils.isBlank(jwtRequest.getUsername()) || StringUtils.isBlank(jwtRequest.getClientId())) {
+			if (StringUtils.isEmpty(jwtRequest.getUsername()) || StringUtils.isEmpty(jwtRequest.getClientId())) {
 
 				return new JwtResponse(
 						"user Name and client id are mandatory for create new token..if you are not sending bearer token for refresh..need to give User name and client id and expirationtime");

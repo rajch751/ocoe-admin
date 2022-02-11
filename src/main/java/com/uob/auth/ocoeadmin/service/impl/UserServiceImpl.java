@@ -1,6 +1,7 @@
 package com.uob.auth.ocoeadmin.service.impl;
 
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.log;
+import static com.uob.auth.ocoeadmin.jwt.utility.OCOEConstants.TOKENEXPIRYTIME;
+import static com.uob.auth.ocoeadmin.jwt.utility.OCOEConstants.TOKENREFRESHTIME;
 
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
@@ -19,7 +20,6 @@ import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.security.spec.RSAPublicKeySpec;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.Date;
@@ -29,11 +29,9 @@ import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
 
-import org.junit.platform.commons.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
 
@@ -51,6 +49,8 @@ import com.uob.auth.ocoeadmin.config.TokenProperties;
 import com.uob.auth.ocoeadmin.jwt.model.JwtRequest;
 import com.uob.auth.ocoeadmin.jwt.model.JwtResponse;
 import com.uob.auth.ocoeadmin.jwt.model.RSAKeyDTO;
+import com.uob.auth.ocoeadmin.jwt.model.TokenTimeDTO;
+import com.uob.auth.ocoeadmin.repository.TblTokenTimeRepository;
 import com.uob.auth.ocoeadmin.service.JwtCreation;
 import com.uob.auth.ocoeadmin.service.UserService;
 
@@ -64,6 +64,11 @@ public class UserServiceImpl implements UserService {
 	private static final String CLIENTONLY = "clientonly";
 
 	private static final String SCOPE = "scp";
+
+	private static final String AUTHTIME = "auth_time";
+
+	@Autowired
+	TblTokenTimeRepository tblTokenRepo;
 
 	// @Value("${token.expirymin}")
 	@Autowired
@@ -110,31 +115,39 @@ public class UserServiceImpl implements UserService {
 		try {
 			long expirytime;
 			LocalDateTime expiryDateTime = null;
-			Date issueDateTime=null;
-			String uid=null;
+			LocalDateTime todaDate = LocalDateTime.now();
+			Date issueDateTime = java.sql.Timestamp.valueOf(todaDate);
+			Date nbf = java.sql.Timestamp.valueOf(todaDate.minusMinutes(1));
+			Date authtime = null;
+			String uid = null;
+			
+
+			if (jwtRequest.isTokenTimeUpdated()) {
+				setTokenProps();
+			}
+			System.out.println(tokenProps+"tokenProps");
 			if (jwtRequest.getExpiryDateTime() == 0) {
 				expirytime = tokenProps.getCreateexpiryTime();
-				LocalDateTime todaDate=LocalDateTime.now();
-				issueDateTime=java.sql.Timestamp.valueOf(todaDate);
 				expiryDateTime = todaDate.plusMinutes(expirytime);
-				uid=UUID.randomUUID().toString();
+				uid = UUID.randomUUID().toString();
+				authtime = issueDateTime;
 			}
 
 			else {
 				expirytime = tokenProps.getRefreshexpiryTime();
-				if(expirytime > (System.currentTimeMillis() / 1000))
-						log.info("token expired {} ms ",(expirytime*1000));
+				if (expirytime > (System.currentTimeMillis() / 1000))
+					log.info("token expired {} ms ", (expirytime * 1000));
 				expiryDateTime = LocalDateTime.now().plusMinutes(expirytime);
-				issueDateTime= new Date(jwtRequest.getIssueDateTime()*1000);
-				uid= jwtRequest.getJti();
+				authtime = new Date(jwtRequest.getAuthTime() * 1000);
+				uid = jwtRequest.getJti();
 
 			}
 
-			//System.out.println(expiryDateTime + "expiryDateTime");
+			// System.out.println(expiryDateTime + "expiryDateTime");
 
 			String token = createClientToken(jwtRequest.getClientId(),
-					Collections.singletonList(jwtRequest.getClientId() + "-ms"), uid,
-					expiryDateTime, rsaJWK.getKeyId(), rsaJWK.getRsaJWK(), jwtRequest.getUsername(),issueDateTime);
+					Collections.singletonList(jwtRequest.getClientId() + "-ms"), uid, expiryDateTime, rsaJWK.getKeyId(),
+					rsaJWK.getRsaJWK(), jwtRequest.getUsername(), issueDateTime, authtime, nbf);
 
 			return new JwtResponse(token, tokenProps.getCreateexpiryTime() + "MIN", expiryDateTime);
 
@@ -151,9 +164,25 @@ public class UserServiceImpl implements UserService {
 		return null;
 	}
 
+	private void setTokenProps() {
+		// TODO Auto-generated method stub
+
+		List<TokenTimeDTO> tokenData = tblTokenRepo.listAllTokenName();
+
+		for (TokenTimeDTO tokenTimeDTO : tokenData) {
+
+			if (tokenTimeDTO.getTokenName().equalsIgnoreCase(TOKENEXPIRYTIME)) {
+				tokenProps.setCreateexpiryTime(tokenTimeDTO.getTokenDuration());
+			} else if (tokenTimeDTO.getTokenName().equalsIgnoreCase(TOKENREFRESHTIME)) {
+				tokenProps.setRefreshexpiryTime(tokenTimeDTO.getTokenDuration());
+			}
+		}
+	}
+
 	public String createClientToken(String clientId, List<String> audiences, String jti,
 
-			LocalDateTime expiryDateTime, String keyId, RSAKey rsaJWK, String userName, Date issueDateTime)
+			LocalDateTime expiryDateTime, String keyId, RSAKey rsaJWK, String userName, Date issueDateTime,
+			Date authTime, Date nbf)
 
 			throws JOSEException, URISyntaxException, NoSuchAlgorithmException {
 
@@ -168,13 +197,13 @@ public class UserServiceImpl implements UserService {
 		 * .signWith(SignatureAlgorithm.HS512, secretKey).compact();
 		 */
 
-		JWTClaimsSet claimsSet = new JWTClaimsSet.Builder().subject(clientId).issuer(userName)
+		JWTClaimsSet claimsSet = new JWTClaimsSet.Builder().subject(userName).issuer("ocoe")
 
-				.expirationTime(java.sql.Timestamp.valueOf(expiryDateTime))
-				
-				.audience(audiences).issueTime(issueDateTime).jwtID(jti)
+				.expirationTime(java.sql.Timestamp.valueOf(expiryDateTime)).notBeforeTime(nbf)
 
-				.claim(SCOPE, "READ_WRITE").claim(CLIENTONLY, YES).build();
+				.audience(clientId).issueTime(issueDateTime).jwtID(jti)
+
+				.claim(SCOPE, "READ_WRITE").claim(CLIENTONLY, YES).claim(AUTHTIME, authTime).build();
 
 		log.info("Fetching a random key to create the token");
 

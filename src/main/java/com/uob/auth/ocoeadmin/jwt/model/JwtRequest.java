@@ -13,12 +13,12 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class JwtRequest {
 
-	@JsonAlias(value = "iss")
+	@JsonAlias(value = "sub")
 	private String username;
     
     private String password;
     
-    @JsonAlias(value = "sub")
+    @JsonAlias(value = "aud")
     private String clientId;
     
     @JsonAlias(value = "exp")
@@ -30,6 +30,13 @@ public class JwtRequest {
     
    
     private String jti;
+    
+    
+    @JsonAlias(value = "auth_time")
+    private long authTime;
+    
+    
+    private boolean tokenTimeUpdated;
     
 	
 	
